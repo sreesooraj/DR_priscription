@@ -1,0 +1,273 @@
+import pandas as pd 
+import numpy as np
+import os, io
+from google.cloud import vision
+from google.cloud.vision import types
+from flask import Flask
+from flask import jsonifyreading 
+
+############################################Reading text from image and converting to text using GOOGLE VISION API############
+os.environ["GOOGLE_APPLICATION_CREDENTIALS"]=r"/home/sooraj/Desktop/sooraj /VisionAPIDemo/sooraj.json"
+
+client=vision.ImageAnnotatorClient()
+FOLDER_PATH = "/home/sooraj/Downloads"
+IMAGE_FILE="Dr_prescription1.jpeg"
+FILE_PATH = os.path.join(FOLDER_PATH,IMAGE_FILE)
+with io.open(FILE_PATH, 'rb') as image_file:
+        content = image_file.read()
+image = vision.types.Image(content=content)
+response = client.document_text_detection(image=image)
+docText =response.full_text_annotation.text
+visit=docText
+text=docText
+
+
+
+
+
+
+#
+######################################################################Reading image of DR_priscription
+import re
+len(text)
+j=[]
+for i in range (0,len(text)):
+    word=re.sub('[^a-zA-Z]',' ',text[i])
+    word=word.lower()
+    if word != ['']:
+        j.append(word)
+
+import nltk
+from nltk.corpus import stopwords
+import re
+
+rs = []
+for word in j:
+    if word not in stopwords.words('english'):
+        rs.append(word)
+text = []
+for i in rs:
+    if len(i) > 1:
+        text.append(i)
+rs=[]
+for i in text:
+    if len(i)>1:
+        rs.append(i)
+dr_pres =np.array(rs,dtype=np.str)
+
+
+def extractDigits(lst):
+    res = []
+    for el in lst:
+        sub = el.split(', ')
+        res.append(sub)
+
+    return (res)
+
+#################################################################################Reading dataset of Lab_Tests from local
+# 
+dr_priscription = extractDigits(dr_pres)
+labtests=pd.read_csv("/home/sooraj/Downloads/lab.csv",sep=" ")
+labtests=labtests.dropna()
+labtests=labtests.iloc[:,:].values
+j=[]
+for i in labtests:
+    word=re.sub('[^a-zA-Z]',' ',i[0])
+    word=word.lower()
+    if word != ['']:
+        j.append(word)
+j
+DRPRISCRI=j
+from fuzzywuzzy import fuzz
+
+match = []
+b = 0
+a = []
+for i in labtests:
+    for j in dr_priscription:
+
+        b = fuzz.ratio(i, j)
+        if (b > 77):
+            match.append(i)
+DRPRISCRI=np.array(match).tolist()
+a=[]
+
+for i in DRPRISCRI:
+    if i not in a:
+        a.append(i)
+labtest=[]
+
+for i in a:
+    if len(i[0])>1:
+     labtest.append(i[0])
+final_labtest=labtest
+
+######################################################################Reading data set of diseases from local
+
+#
+
+disease=pd.read_csv("/home/sooraj/Downloads/diseases.csv",sep=" ")
+
+disease=disease.dropna()
+disease.tail()
+disease=disease.iloc[:,:].values
+disease
+j=[]
+for i in disease:
+    word=re.sub('[^a-zA-Z]',' ',i[0])
+    word=word.lower()
+    if word != ['']:
+        j.append(word)
+j
+DRPRISCRI=j
+match = []
+b = 0
+a = []
+for i in disease:
+    for j in dr_priscription:
+
+        b = fuzz.ratio(i, j)
+        if (b > 72):
+            match.append(i)
+DRPRISCRI=np.array(match).tolist()
+DRPRISCRI
+a=[]
+
+for i in DRPRISCRI:
+    if i not in a:
+        a.append(i)
+disease=[]
+
+for i in a:
+    disease.append(i[0])
+final_diaganose=disease
+disease
+############################################################################################Reading medicine dataset from local
+#reading medicine dataset from local
+medicine=pd.read_csv("/home/sooraj/Downloads/medicines.csv",sep=" ")
+medicine=medicine.dropna()
+
+medicine=medicine.iloc[:,0].values
+j=[]
+for i in medicine:
+    word=re.sub('[^a-zA-Z]',' ',i)
+    word=word.lower()
+    if word != ['']:
+        j.append(word)
+
+DRPRISCRI=j
+match = []
+b = 0
+a = []
+for i in medicine:
+    for j in dr_priscription:
+
+        b = fuzz.ratio(i, j)
+        if (b > 70):
+            match.append(i)
+DRPRISCRI=np.array(match).tolist()
+medicine=DRPRISCRI
+final_medicine=medicine
+visit=visit.splitlines()
+
+
+len(text)
+j=[]
+for i in range (0,len(visit)):
+    word=visit[i]
+    word=word.lower()
+    if word != ['']:
+        j.append(word)
+rs=[]
+for word in j:
+    if word not in stopwords.words('english'):
+        rs.append(word)
+text=[]
+for i in rs:
+        text.append(i)
+
+next_v = ["next vist", "visit", "follow", "followup", "revisit", "come on"]
+next_visit="nil"
+match = []
+b = 0
+a = []
+for i in next_v:
+    for j in text:
+
+
+        b = fuzz.ratio(i, j)
+        if (b > 54):
+            match.append(j)
+match
+for i in match:
+    if re.search(r'\d{2}-\d{2}-\d{4}', i) or re.search(r'\d{2}-\w{2}', i):
+        next_visit = match
+
+patterns = ['once a day', 'twice a day', 'thrise a day', 'after break fast', 'before breakfast',
+            'after lunch', 'before lunch', 'after dinner', 'before dinner', 'for one dat', 'for two day',
+            ' for three days', ' for 6 days', 'for one week', 'for two week',
+            'for three week', 'for one month', 'for two month', 'for three month']
+
+match = []
+b = 0
+a = []
+for i in patterns:
+    for j in dr_priscription:
+
+        b = fuzz.ratio(i, j)
+        if (b > 70):
+            match.append(i)
+final_course=match
+##########################################################################################Reading  Diet dataset from local
+#
+diet=pd.read_csv("/home/sooraj/Downloads/diet.csv",sep=" ")
+diet=diet.iloc[:,0].values
+diet_data=[]
+for i in diet:
+    word=i.lower()
+    word=word.split(" ")
+    diet_data.append(word)
+diet=[]
+for i in diet_data:
+    for j in i:
+       diet.append(j)
+final_diet=[]
+diet.sort()
+
+match = []
+b = 0
+a = []
+for i in diet:
+    for j in dr_priscription:
+
+        b = fuzz.ratio(i, j)
+        if (b > 70):
+            match.append(i)
+final_diet=match
+
+
+
+from flask_restful import Resource, Api
+
+app = Flask(__name__)
+api = Api(app)
+
+
+
+@app.route("/")
+def hello():
+    c = "wsls"
+
+    return jsonify(
+        LAB_TEST=final_labtest,
+        MEDICINE=final_medicine,
+        DOCTER_DIAGANOSIS=final_diaganose,
+        DIET_SUGGETION=final_diet,
+        NEXT_VISIT_ADVICE=next_visit,
+        MEDICINE_COURSE= final_course
+    )
+
+
+
+if __name__ == "__main__":
+    app.run(debug=True)
